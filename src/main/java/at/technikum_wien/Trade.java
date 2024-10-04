@@ -1,3 +1,5 @@
+package at.technikum_wien;
+
 public class Trade {
     private Card offerCard;
     private String condition;  // e.g., "Spell with min damage 70"

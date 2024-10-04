@@ -1,3 +1,5 @@
+package at.technikum_wien;
+
 public class Battle {
     private User player1;
     private User player2;
@@ -12,4 +14,5 @@ public class Battle {
     public void initiateBattle() {
 
     }
+
 }

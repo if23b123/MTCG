@@ -1,3 +1,5 @@
+package at.technikum_wien;
+
 public class SpellCard extends Card {
     public SpellCard(String name, int damage, String element) {
         super(name, damage, element);

@@ -1,3 +1,5 @@
+package at.technikum_wien;
+
 public class MonsterCard extends Card {
     public MonsterCard(String name, int damage, String element) {
         super(name, damage, element);

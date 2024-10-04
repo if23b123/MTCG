@@ -1,18 +1,37 @@
+package at.technikum_wien;
+
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Random;
 
-public class User {
-    private final String username;
-    private final String password;
-    private int coins;
-    private List<Card> stack;
-    private List<Card> deck;
-    private int elo;
-    private int gamesPlayed;//user stats
-    private int gamesWon;//user stats
 
-    public User(String username, String password) {
+@Getter
+@Setter(AccessLevel.PRIVATE)
+
+public class User {
+
+    private Integer id;
+    @Getter
+    private final String username;
+    @Getter
+    private final String password;
+    @Getter
+    private Integer coins;
+    @Getter
+    private List<Card> stack;
+    @Getter
+    private List<Card> deck;
+    @Getter
+    private Integer elo;
+    private Integer gamesPlayed;//user stats
+    private Integer gamesWon;//user stats
+
+    public User(Integer id, String username, String password) {
+        this.id=id;
         this.username = username;
         this.password = password;
         this.coins = 20;
@@ -21,30 +40,6 @@ public class User {
         this.elo = 100; //starting value
         this.gamesPlayed = 0;
         this.gamesWon = 0;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public int getCoins() {
-        return coins;
-    }
-
-    public List<Card> getStack() {
-        return stack;
-    }
-
-    public List<Card> getDeck() {
-        return deck;
-    }
-
-    public int getElo() {
-        return elo;
     }
 
     public void updateElo(boolean hasWon) {
@@ -81,7 +76,7 @@ public class User {
         return true;
     }
     public boolean battleLogic(Card userCard, Card opponentCard){
-
+        return true;
     }
     public boolean battle(User opponent) {
         System.out.println(username + " is battling " + opponent.getUsername() + "!");

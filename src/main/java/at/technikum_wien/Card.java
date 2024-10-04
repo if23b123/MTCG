@@ -1,3 +1,5 @@
+package at.technikum_wien;
+
 public abstract class Card {
     private String cardName;
     private int damage;
