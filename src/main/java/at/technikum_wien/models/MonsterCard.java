@@ -1,4 +1,4 @@
-package at.technikum_wien;
+package at.technikum_wien.models;
 
 public class MonsterCard extends Card {
     public MonsterCard(String name, int damage, String element) {

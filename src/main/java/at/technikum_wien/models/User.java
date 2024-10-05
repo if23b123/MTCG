@@ -1,4 +1,4 @@
-package at.technikum_wien;
+package at.technikum_wien.models;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -8,17 +8,15 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Random;
 
-
-@Getter
-@Setter(AccessLevel.PRIVATE)
-
 public class User {
 
     private Integer id;
     @Getter
-    private final String username;
+    @Setter(AccessLevel.PRIVATE)
+    private String username;
     @Getter
-    private final String password;
+    @Setter(AccessLevel.PRIVATE)
+    private String password;
     @Getter
     private Integer coins;
     @Getter
@@ -29,6 +27,7 @@ public class User {
     private Integer elo;
     private Integer gamesPlayed;//user stats
     private Integer gamesWon;//user stats
+
 
     public User(Integer id, String username, String password) {
         this.id=id;
@@ -102,19 +101,6 @@ public class User {
         return true;
     }
 
-    public boolean register() {
-        // Registration logic
-        return true; // Registration successful
-    }
 
-    public boolean login(String username, String password) {
-        //LogIn Logic - check w PostgreSQL database
-        if (this.username.equals(username) && this.password.equals(password)) {
-            System.out.println(username + " has logged in successfully.");
-            return true;
-        }
-        System.out.println("Invalid credentials!");
-        return false;
-    }
 
 }

@@ -1,4 +1,4 @@
-package at.technikum_wien;
+package at.technikum_wien.models;
 
 public class SpellCard extends Card {
     public SpellCard(String name, int damage, String element) {
