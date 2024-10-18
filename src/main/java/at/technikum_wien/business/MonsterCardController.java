@@ -1,7 +1,9 @@
-package at.technikum_wien.models;
+package at.technikum_wien.business;
 
-public class MonsterCard extends Card {
-    public MonsterCard(String name, int damage, String element) {
+import at.technikum_wien.models.Card;
+
+public class MonsterCardController extends CardController {
+    public MonsterCardController(String name, int damage, String element) {
         super(name, damage, element);
     }
 
@@ -9,7 +11,7 @@ public class MonsterCard extends Card {
     public boolean calcEffectiveness(Card opponentCard) {
         boolean result = false;
 
-        if (opponentCard instanceof MonsterCard) {
+        if (opponentCard instanceof MonsterCardController) {
             switch (getCardName()) {
                 case "Dragon":
                     if (opponentCard.getCardName().equals("Goblin")) {
@@ -39,14 +41,14 @@ public class MonsterCard extends Card {
                     }
                     break;
             }
-            result = calcDamage(opponentCard);
-        } else if (opponentCard instanceof SpellCard) {
+            result = calcDamage(this, opponentCard);
+        } else if (opponentCard instanceof SpellCardController) {
             if (getCardName().equals("Knight") && opponentCard.getElement().equals("Water")) {
                 return false;
             } else if (getCardName().equals("Kraken")) {
                 return true;
             } else {
-                result = calculateElementEffectiveness(opponentCard);
+                result = calculateElementEffectiveness(this, opponentCard);
             }
         }
         return result;

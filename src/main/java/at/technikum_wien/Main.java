@@ -1,11 +1,30 @@
 package at.technikum_wien;
 
-import at.technikum_wien.data.Server;
+import at.technikum_wien.business.UserController;
+import at.technikum_wien.data.services.SessionService;
+import at.technikum_wien.data.services.UserService;
+import at.technikum_wien.data.server.Server;
+import at.technikum_wien.data.utils.Router;
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
+
 public class Main {
     public static void main(String[] args) {
-        Server server = new Server();
+        Server server = new Server(10001, configureRouter());
+        try{
+            server.start();
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+    }
+    private static Router configureRouter()
+    {
+        Router router = new Router();
+        UserController userController = new UserController();
+        router.addService("/users", new UserService(userController));
+        router.addService("/sessions", new SessionService(userController));
+        return router;
     }
 }
+
+

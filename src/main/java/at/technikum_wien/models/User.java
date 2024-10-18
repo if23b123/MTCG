@@ -8,22 +8,17 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Random;
 
+@Getter
+@Setter
+
 public class User {
 
     private Integer id;
-    @Getter
-    @Setter(AccessLevel.PRIVATE)
     private String username;
-    @Getter
-    @Setter(AccessLevel.PRIVATE)
     private String password;
-    @Getter
     private Integer coins;
-    @Getter
     private List<Card> stack;
-    @Getter
     private List<Card> deck;
-    @Getter
     private Integer elo;
     private Integer gamesPlayed;//user stats
     private Integer gamesWon;//user stats
@@ -49,36 +44,30 @@ public class User {
             elo -= 5;   // -5 for loss
         }
         gamesPlayed++; //for stats
-        System.out.println(username + "'s new ELO: " + elo);
     }
 
     public boolean acquireCards(List<Card> newCards) { //to add a new package
         if (coins >= 5) {
             coins -= 5;
             stack.addAll(newCards); // adding newCards which is a new package to the users stack of cards
-            System.out.println(username + " has acquired a new package of cards.");
             return true;
         } else {
-            System.out.println("Not enough coins.");
             return false;
         }
     }
 
     public boolean setDeck(List<Card> selectedCards) {
         if (selectedCards.size() != 4) {
-            System.out.println("Deck must contain exactly 4 cards!");
             return false;
         }
         deck.clear();
         deck.addAll(selectedCards);
-        System.out.println(username + " has defined their deck.");
         return true;
     }
     public boolean battleLogic(Card userCard, Card opponentCard){
         return true;
     }
     public boolean battle(User opponent) {
-        System.out.println(username + " is battling " + opponent.getUsername() + "!");
         Random random = new Random();
         int randomCardUser= random.nextInt(4);
         int randomCardOpponent= random.nextInt(4);
@@ -86,11 +75,9 @@ public class User {
         if (result) {
             updateElo(true);  // Update this user's ELO
             opponent.updateElo(false);  // Update opponent's ELO
-            System.out.println(username + " has won the battle!");
         } else {
             updateElo(false);
             opponent.updateElo(true);
-            System.out.println(username + " has lost the battle!");
         }
 
         return result;
