@@ -2,6 +2,7 @@ package at.technikum_wien.data.server;
 
 import at.technikum_wien.data.utils.RequestHandler;
 import at.technikum_wien.data.utils.Router;
+import at.technikum_wien.data.DBConnection;
 import lombok.Getter;
 
 import java.io.*;
@@ -20,6 +21,9 @@ public class Server {
         this.router = router;
     }
     public void start() throws IOException {
+
+        DBConnection.connect();
+
         final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
         System.out.println("Start http-server...");
@@ -31,6 +35,8 @@ public class Server {
                 final RequestHandler socketHandler = new RequestHandler(clientConnection, this.router);
                 executorService.submit(socketHandler);
             }
+        } finally {
+            DBConnection.close();
         }
     }
 
