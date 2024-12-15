@@ -1,5 +1,6 @@
 package at.technikum_wien.business;
 
+import at.technikum_wien.data.DBConnection;
 import at.technikum_wien.data.http.HttpStatus;
 import at.technikum_wien.data.http.ContentType;
 import at.technikum_wien.data.server.Request;
@@ -8,6 +9,10 @@ import at.technikum_wien.models.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,20 +20,26 @@ import java.util.Map;
 
 public class UserController{
     private Map<Integer, User> users;
+    private Connection connection;
 
     public UserController() {
-        this.users = new HashMap<>();
+        connection = DBConnection.getConnection();
+        if (connection == null) {
+            connection=DBConnection.connect();
+        }
     }
-    private boolean userExists(String username) {
-        for (User user : users.values()) {
-            if (user.getUsername().equals(username)) {
+    private boolean userExists(String username) throws SQLException {
+        PreparedStatement ps = connection.prepareStatement("SELECT * FROM users WHERE username = ?");
+        ps.setString(1, username);
+        ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
                 return true;
             }
-        }
+
         return false;
     }
     //POST user
-    public Response registerUser(Request request) {
+    public Response registerUser(Request request) throws SQLException {
         // Parse the request body
         String requestBody = request.getBody();
         Map<String, String> userData = parseJson(requestBody);
@@ -42,8 +53,11 @@ public class UserController{
         }
 
         // Add new user
-        int ID = users.size();
-        users.put(ID, new User(ID, username, password));
+        PreparedStatement ps = connection.prepareStatement("INSERT INTO users (username, password) VALUES (?, ?)");
+        ps.setString(1, username);
+        ps.setString(2, password);
+        int rs = ps.executeUpdate();
+
         return new Response(HttpStatus.CREATED, ContentType.PLAIN_TEXT, "User created");
     }
 

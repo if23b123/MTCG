@@ -8,6 +8,7 @@ import lombok.Getter;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.Connection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -22,7 +23,7 @@ public class Server {
     }
     public void start() throws IOException {
 
-        DBConnection.connect();
+        Connection myCon = DBConnection.connect();
 
         final ExecutorService executorService = Executors.newFixedThreadPool(10);
 

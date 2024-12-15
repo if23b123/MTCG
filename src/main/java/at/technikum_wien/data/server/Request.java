@@ -2,6 +2,8 @@ package at.technikum_wien.data.server;
 
 import at.technikum_wien.data.http.Method;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,8 +57,11 @@ public class Request {
                 this.pathParts.isEmpty()) {
             return null;
         }
+        String decodedPath = URLDecoder.decode(this.pathParts.get(0), StandardCharsets.UTF_8);
 
-        return '/' + this.pathParts.get(0);
+        String[] pathSegments = decodedPath.split(" ");
+
+        return "/" + pathSegments[0] ;
     }
 
     public HeaderMap getHeaderMap() {

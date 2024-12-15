@@ -22,11 +22,9 @@ public class RequestBuilder {
                 request.getHeaderMap().ingest(line);
                 line = buffer.readLine();
             }
-
             if (request.getHeaderMap().getContentLength() > 0) {
                 char[] charBuffer = new char[request.getHeaderMap().getContentLength()];
                 buffer.read(charBuffer, 0, request.getHeaderMap().getContentLength());
-
                 request.setBody(new String(charBuffer));
             }
         }

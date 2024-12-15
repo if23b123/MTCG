@@ -9,6 +9,7 @@ import at.technikum_wien.data.server.Response;
 import at.technikum_wien.data.server.Service;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 public class UserService implements Service{
     private UserController userController;
@@ -18,7 +19,7 @@ public class UserService implements Service{
     }
 
     @Override
-    public Response handleRequest(Request request) {
+    public Response handleRequest(Request request) throws SQLException {
         if (request.getMethod() == Method.POST) {
             return this.userController.registerUser(request);
         } else if(request.getMethod() == Method.GET) {
