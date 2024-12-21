@@ -25,9 +25,15 @@ public class UserService implements Service{
         } else if(request.getMethod() == Method.GET) {
             if (request.getPathParts().size() > 1) { // "/users/{username}"
                 String username = request.getPathParts().get(1); // Extract username from URL
-                return this.userController.getUserByUsername(username);
+                return this.userController.getUserByUsername(request, username);
             }
             return this.userController.getUsers();
+        }else if(request.getMethod()==Method.PUT){
+            if (request.getPathParts().size() > 1) {
+                String username = request.getPathParts().get(1);
+                return this.userController.editUserData(username, request);
+
+            }
         }
         return new Response(HttpStatus.NOT_IMPLEMENTED, ContentType.PLAIN_TEXT, "Method Not Allowed");
     }

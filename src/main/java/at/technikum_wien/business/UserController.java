@@ -13,10 +13,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class UserController{
     private Map<Integer, User> users;
@@ -63,13 +60,27 @@ public class UserController{
 
     private Map<String, String> parseJson(String requestBody) {
         Map<String, String> userData = new HashMap<>();
-        String[] parts = requestBody.replaceAll("[{}\"]", "").split(",");
-        for (String part : parts) {
-            String[] keyValue = part.split(":");
-            userData.put(keyValue[0].trim(), keyValue[1].trim());
+
+        // Remove surrounding braces and quotes
+        String cleanedRequestBody = requestBody.trim().replaceAll("^[{]|[}]$", "");
+
+        // Split by commas to separate key-value pairs
+        String[] keyValuePairs = cleanedRequestBody.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+
+        for (String pair : keyValuePairs) {
+            // Split key-value pair by the first colon
+            String[] keyValue = pair.split(":(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", 2);
+
+            if (keyValue.length == 2) {
+                // Remove any extra quotes from keys and values
+                String key = keyValue[0].trim().replaceAll("^\"|\"$", "");
+                String value = keyValue[1].trim().replaceAll("^\"|\"$", "");
+                userData.put(key, value);
+            }
         }
         return userData;
     }
+
     //GET users
     public Response getUsers() {
         try {
@@ -102,23 +113,33 @@ public class UserController{
         }
     }
 
-    public Response getUserByUsername(String username) throws SQLException {
-        PreparedStatement ps = connection.prepareStatement("SELECT * FROM users WHERE username = ?");
-        ps.setString(1, username);
-        ResultSet search = ps.executeQuery();
-        StringBuilder userDataJSON = new StringBuilder();
+    public Response getUserByUsername(Request request, String username) throws SQLException {
+        if (userExists(username)) {
+            if(authorize(username, request)){
+                PreparedStatement ps = connection.prepareStatement("SELECT * FROM users WHERE username = ?");
+                ps.setString(1, username);
+                ResultSet search = ps.executeQuery();
+                StringBuilder userDataJSON = new StringBuilder();
 
-        while (search.next()) {
-            String uuid = search.getString("user_id");
-            String username1 = search.getString("username");
-            String password = search.getString("password");
-            Integer elo = search.getInt("elo");
-            Integer wins = search.getInt("wins");
-            Integer loss = search.getInt("losses");
+                while (search.next()) {
+                    String uuid = search.getString("user_id");
+                    String username1 = search.getString("username");
+                    String name = search.getString("name");
+                    String bio = search.getString("bio");
+                    String image = search.getString("image");
+                    String password = search.getString("password");
+                    Integer elo = search.getInt("elo");
+                    Integer wins = search.getInt("wins");
+                    Integer loss = search.getInt("losses");
 
-            userDataJSON.append(username).append(" (username) - ").append(elo).append(" (elo) - ").append(wins).append(" (wins) - ").append(loss).append(" (loss)").append("\r\n");
+                    userDataJSON.append(username).append(" (username) - ").append(name).append(" (name) - ").append(bio).append(" (bio) - ").append(image).append(" (image) - ").
+                            append(elo).append(" (elo) - ").append(wins).append(" (wins) - ").append(loss).append(" (loss)").append("\r\n");
 
-            return new Response(HttpStatus.OK, ContentType.JSON, userDataJSON.toString());
+                    return new Response(HttpStatus.OK, ContentType.JSON, userDataJSON.toString());
+                }
+            }else{
+                return new Response(HttpStatus.UNAUTHORIZED, ContentType.PLAIN_TEXT, "Attempted unauthorized access");
+            }
         }
         return new Response(HttpStatus.NOT_FOUND, ContentType.PLAIN_TEXT, "User not found");
     }
@@ -144,7 +165,61 @@ public class UserController{
 
     }
 
+    public Response editUserData(String username, Request request) throws SQLException {
+        if(authorize(username,request)) {
+            if(userExists(username)){
+                String requestBody = request.getBody();
+                Map<String, String> userData = parseJson(requestBody);
 
+                String name = userData.get("Name");
+                String bio = userData.get("Bio");
+                String image = userData.get("Image");
+
+
+                PreparedStatement ps = connection.prepareStatement("UPDATE users SET name = ?,  bio = ?, image = ? WHERE username = ?");
+                ps.setString(1, name);
+                ps.setString(2, bio);
+                ps.setString(3, image);
+                ps.setString(4, username);
+                int rs = ps.executeUpdate();
+
+                return new Response(HttpStatus.OK, ContentType.PLAIN_TEXT, "User updated");
+            }
+        }
+        return new Response(HttpStatus.NOT_FOUND, ContentType.PLAIN_TEXT, "Not authorized");
+    }
+    private boolean authorize(String username, Request request) throws SQLException {
+        PreparedStatement ps = connection.prepareStatement("SELECT * FROM users WHERE username = ?");
+        ps.setString(1, username);
+        ResultSet result = ps.executeQuery();
+        if (result.next()) {
+            String token = result.getString("token");
+            return Objects.equals(token, request.getHeaderMap().getHeader("Authorization").substring(7));
+        }
+        return false;
+    }
+
+    public Response loginUser(Request request) throws SQLException {
+        // Parse the login data
+        String requestBody = request.getBody();
+        Map<String, String> loginData = parseJson(requestBody);
+
+        String username = loginData.get("Username");
+        String password = loginData.get("Password");
+
+        // Verify the user exists and the password is correct
+        boolean doesUserExist = getUserByUsernameAndPassword(username, password);
+        if (doesUserExist) {
+            // Generate a token in the format: {username}-mtcgToken
+            String token = username + "-mtcgToken";
+            boolean addTokenToUser = pushToken(username, password, token);
+            if (addTokenToUser) {
+                return new Response(HttpStatus.OK, ContentType.PLAIN_TEXT, token);
+            }
+        }
+        // Return unauthorized if the credentials are incorrect
+        return new Response(HttpStatus.UNAUTHORIZED, ContentType.PLAIN_TEXT, "Invalid credentials for Login");
+    }
 }
 
 
