@@ -29,7 +29,7 @@ public class UserService implements Service{
             }
             return this.userController.getUsers();
         }
-            return new Response(HttpStatus.NOT_IMPLEMENTED, ContentType.PLAIN_TEXT, "Method Not Allowed");
+        return new Response(HttpStatus.NOT_IMPLEMENTED, ContentType.PLAIN_TEXT, "Method Not Allowed");
     }
 
 

@@ -1,6 +1,8 @@
 package at.technikum_wien;
 
 import at.technikum_wien.business.UserController;
+import at.technikum_wien.business.PackageController;
+import at.technikum_wien.data.services.PackageService;
 import at.technikum_wien.data.services.SessionService;
 import at.technikum_wien.data.services.UserService;
 import at.technikum_wien.data.server.Server;
@@ -21,8 +23,10 @@ public class Main {
     {
         Router router = new Router();
         UserController userController = new UserController();
+        PackageController packageController = new PackageController();
         router.addService("/users", new UserService(userController));
         router.addService("/sessions", new SessionService(userController));
+        router.addService("/packages", new PackageService(packageController));
         return router;
     }
 }

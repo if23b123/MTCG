@@ -73,16 +73,26 @@ public class UserController{
     //GET users
     public Response getUsers() {
         try {
-            List<User> userList = new ArrayList<>(users.values());
-            ObjectMapper mapper = new ObjectMapper();
-            String userDataJSON = mapper.writeValueAsString(userList);
+            PreparedStatement ps = connection.prepareStatement("SELECT * FROM users");
+            ResultSet rs = ps.executeQuery();
+            StringBuilder userDataJSON = new StringBuilder();
 
+            while(rs.next()) {
+                String uuid = rs.getString("user_id");
+                String username = rs.getString("username");
+                String password = rs.getString("password");
+                Integer elo = rs.getInt("elo");
+                Integer wins = rs.getInt("wins");
+                Integer loss = rs.getInt("losses");
+
+                userDataJSON.append(username).append(" (username) - ").append(elo).append(" (elo) - ").append(wins).append(" (wins) - ").append(loss).append(" (loss)").append("\r\n");
+            }
             return new Response(
                     HttpStatus.OK,
                     ContentType.JSON,
-                    userDataJSON
+                    userDataJSON.toString()
             );
-        } catch (JsonProcessingException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
             return new Response(
                     HttpStatus.INTERNAL_SERVER_ERROR,
@@ -92,35 +102,46 @@ public class UserController{
         }
     }
 
-    public Response getUserByUsername(String username) {
-        User search = null;
-        for (User user : users.values()) {
-            if (user.getUsername().equals(username)) {
-                search=user;
-                break;
-            }
-        }
+    public Response getUserByUsername(String username) throws SQLException {
+        PreparedStatement ps = connection.prepareStatement("SELECT * FROM users WHERE username = ?");
+        ps.setString(1, username);
+        ResultSet search = ps.executeQuery();
+        StringBuilder userDataJSON = new StringBuilder();
 
-        if (search != null) {
-            try {
-                // Convert user to JSON and return the response
-                ObjectMapper mapper = new ObjectMapper();
-                String userDataJSON = mapper.writeValueAsString(search);
-                return new Response(HttpStatus.OK, ContentType.JSON, userDataJSON);
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-                return new Response(HttpStatus.INTERNAL_SERVER_ERROR, ContentType.PLAIN_TEXT, "Error processing user data");
-            }
+        while (search.next()) {
+            String uuid = search.getString("user_id");
+            String username1 = search.getString("username");
+            String password = search.getString("password");
+            Integer elo = search.getInt("elo");
+            Integer wins = search.getInt("wins");
+            Integer loss = search.getInt("losses");
+
+            userDataJSON.append(username).append(" (username) - ").append(elo).append(" (elo) - ").append(wins).append(" (wins) - ").append(loss).append(" (loss)").append("\r\n");
+
+            return new Response(HttpStatus.OK, ContentType.JSON, userDataJSON.toString());
         }
         return new Response(HttpStatus.NOT_FOUND, ContentType.PLAIN_TEXT, "User not found");
     }
-    public User getUserByUsernameAndPassword(String username, String password) {
-        for (User user : users.values()) {
-            if (user.getUsername().equals(username)&&user.getPassword().equals(password)) {
-                return user;
-            }
+    public boolean getUserByUsernameAndPassword(String username, String password) throws SQLException {
+        PreparedStatement ps = connection.prepareStatement("SELECT * FROM users WHERE username = ? AND password = ?");
+        ps.setString(1, username);
+        ps.setString(2, password);
+        ResultSet result = ps.executeQuery();
+        if (result.next()) {
+            return true;
         }
-        return null;
+        return false;
+    }
+    public boolean pushToken(String username, String password, String token) throws SQLException {
+        PreparedStatement ps = connection.prepareStatement("UPDATE users SET token = ? WHERE username = ? AND password = ?");
+        ps.setString(1, token);
+        ps.setString(2, username);
+        ps.setString(3, password);
+        int rs = ps.executeUpdate();
+        if(rs!=0)
+            return true;
+        return false;
+
     }
 
 
