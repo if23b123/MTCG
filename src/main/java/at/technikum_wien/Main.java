@@ -1,12 +1,12 @@
 package at.technikum_wien;
 
-import at.technikum_wien.business.UserController;
-import at.technikum_wien.business.PackageController;
-import at.technikum_wien.data.services.PackageService;
-import at.technikum_wien.data.services.SessionService;
-import at.technikum_wien.data.services.UserService;
-import at.technikum_wien.data.server.Server;
-import at.technikum_wien.data.utils.Router;
+import at.technikum_wien.app.services.users.UserController;
+import at.technikum_wien.app.services.packages.PackageController;
+import at.technikum_wien.app.services.packages.PackageService;
+import at.technikum_wien.app.services.users.SessionService;
+import at.technikum_wien.app.services.users.UserService;
+import at.technikum_wien.httpserver.server.Server;
+import at.technikum_wien.httpserver.utils.Router;
 
 
 public class Main {
