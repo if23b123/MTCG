@@ -135,13 +135,9 @@ public class UserRepository {
             String sql = "UPDATE users SET name = ?,  bio = ?, image = ? WHERE username = ?";
             PreparedStatement ps = unitOfWork.prepareStatement(sql);
             ps.setString(1,user.getName());
-            System.out.println(user.getName());
             ps.setString(2, user.getBio());
-            System.out.println(user.getBio());
             ps.setString(3,user.getImage());
-            System.out.println(user.getImage());
             ps.setString(4,user.getUsername());
-            System.out.println(user.getUsername());
             int rs = ps.executeUpdate();
             if (rs > 0) {
                 unitOfWork.commitTransaction();
