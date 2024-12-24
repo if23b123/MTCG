@@ -148,4 +148,20 @@ public class UserRepository {
             throw new RuntimeException(e);
         }
     }
+
+    public boolean searchAdmin(String token){
+        try{
+            String sql = "SELECT * FROM users WHERE token = ?";
+            PreparedStatement ps = unitOfWork.prepareStatement(sql);
+            ps.setString(1,token);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                unitOfWork.commitTransaction();
+                return true;
+            }
+            return false;
+        }catch(SQLException e){
+            throw new RuntimeException(e);
+        }
+    }
 }
