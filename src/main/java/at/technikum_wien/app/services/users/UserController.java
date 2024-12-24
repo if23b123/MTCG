@@ -1,224 +1,167 @@
 package at.technikum_wien.app.services.users;
 
-import at.technikum_wien.app.dal.DBConnection;
+import at.technikum_wien.app.controller.Controller;
+import at.technikum_wien.app.dal.DataAccessException;
+import at.technikum_wien.app.dal.repository.UserRepository;
 import at.technikum_wien.httpserver.http.HttpStatus;
 import at.technikum_wien.httpserver.http.ContentType;
 import at.technikum_wien.httpserver.server.Request;
 import at.technikum_wien.httpserver.server.Response;
 import at.technikum_wien.app.models.User;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
 //to handle prepared statements and return responses
 
-public class UserController{
-    private Map<Integer, User> users;
-    private Connection connection;
+public class UserController extends Controller {
+    private UserRepository userRepository;
 
     public UserController() {
-        connection = DBConnection.getConnection();
-        if (connection == null) {
-            connection=DBConnection.connect();
+        userRepository = new UserRepository();
+    }
+
+    private boolean userExists(String username) {
+        try {
+            return userRepository.searchUser(username);
+        } catch (DataAccessException e) {
+            System.err.println("Error occurred while checking user existence: " + e.getMessage());
+            e.printStackTrace(); // Optional: Log the full stack trace for debugging
+            return false;
         }
     }
-    private boolean userExists(String username) throws SQLException {
-        PreparedStatement ps = connection.prepareStatement("SELECT * FROM users WHERE username = ?");
-        ps.setString(1, username);
-        ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                return true;
-            }
 
+    private boolean authorize(String username, Request request) {
+        User userToAuthorize = this.userRepository.getByUsername(username);
+        if (userToAuthorize.getUuid() != "") {
+            return Objects.equals(userToAuthorize.getToken(), request.getHeaderMap().getHeader("Authorization").substring(7));
+        }
         return false;
     }
+
     //POST user
-    public Response registerUser(Request request) throws SQLException {
-        // Parse the request body
-        String requestBody = request.getBody();
-        Map<String, String> userData = parseJson(requestBody);
-
-        String username = userData.get("Username");
-        String password = userData.get("Password");
-
-        if (userExists(username)) {
-            // User already exists
-            return new Response(HttpStatus.CONFLICT, ContentType.PLAIN_TEXT, "User already exists");
-        }
-
-        // Add new user
-        PreparedStatement ps = connection.prepareStatement("INSERT INTO users (username, password) VALUES (?, ?)");
-        ps.setString(1, username);
-        ps.setString(2, password);
-        int rs = ps.executeUpdate();
-
-        return new Response(HttpStatus.CREATED, ContentType.PLAIN_TEXT, "User created");
-    }
-
-    private Map<String, String> parseJson(String requestBody) {
-        Map<String, String> userData = new HashMap<>();
-
-        // Remove surrounding braces and quotes
-        String cleanedRequestBody = requestBody.trim().replaceAll("^[{]|[}]$", "");
-
-        // Split by commas to separate key-value pairs
-        String[] keyValuePairs = cleanedRequestBody.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-
-        for (String pair : keyValuePairs) {
-            // Split key-value pair by the first colon
-            String[] keyValue = pair.split(":(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", 2);
-
-            if (keyValue.length == 2) {
-                // Remove any extra quotes from keys and values
-                String key = keyValue[0].trim().replaceAll("^\"|\"$", "");
-                String value = keyValue[1].trim().replaceAll("^\"|\"$", "");
-                userData.put(key, value);
+    public Response registerUser(Request request){
+        try {
+            User postUser = this.getObjectMapper().readValue(request.getBody(), User.class);
+            if (userExists(postUser.getUsername())) {
+                // User already exists
+                return new Response(HttpStatus.CONFLICT, ContentType.PLAIN_TEXT, "User already exists");
             }
+
+            User newUser = new User(postUser.getUsername(), postUser.getPassword());
+            boolean add = userRepository.insertUser(newUser);
+            if (add) {
+                return new Response(HttpStatus.CREATED, ContentType.PLAIN_TEXT, "User created");
+            }
+            return new Response(HttpStatus.CONFLICT, ContentType.PLAIN_TEXT, "User cannot be created");
+        }catch(JsonProcessingException e) {
+            e.printStackTrace();
+            return new Response(HttpStatus.CONFLICT, ContentType.PLAIN_TEXT, "Json processing error");
+        } catch (SQLException e) {
+            return new Response(HttpStatus.CONFLICT, ContentType.PLAIN_TEXT, "SQL error");
         }
-        return userData;
     }
 
     //GET users
     public Response getUsers() {
         try {
-            PreparedStatement ps = connection.prepareStatement("SELECT * FROM users");
-            ResultSet rs = ps.executeQuery();
-            StringBuilder userDataJSON = new StringBuilder();
-
-            while(rs.next()) {
-                String uuid = rs.getString("user_id");
-                String username = rs.getString("username");
-                String password = rs.getString("password");
-                Integer elo = rs.getInt("elo");
-                Integer wins = rs.getInt("wins");
-                Integer loss = rs.getInt("losses");
-
-                userDataJSON.append(username).append(" (username) - ").append(elo).append(" (elo) - ").append(wins).append(" (wins) - ").append(loss).append(" (loss)").append("\r\n");
+            Collection<User> allUsers = userRepository.getAllUsers();
+            String users = "";
+            for (User user : allUsers) {
+                users += this.getObjectMapper().writeValueAsString(user) + "\r\n";
             }
             return new Response(
                     HttpStatus.OK,
                     ContentType.JSON,
-                    userDataJSON.toString()
+                    users
             );
-        } catch (SQLException e) {
+        } catch (RuntimeException e) {
             e.printStackTrace();
             return new Response(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     ContentType.JSON,
                     "{ \"message\" : \"Internal Server Error\" }"
             );
+        } catch (JsonProcessingException e) {
+            return new Response(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    ContentType.PLAIN_TEXT,
+                    "Issue processing Json"
+            );
         }
     }
 
-    public Response getUserByUsername(Request request, String username) throws SQLException {
-        if (userExists(username)) {
-            if(authorize(username, request)){
-                PreparedStatement ps = connection.prepareStatement("SELECT * FROM users WHERE username = ?");
-                ps.setString(1, username);
-                ResultSet search = ps.executeQuery();
-                StringBuilder userDataJSON = new StringBuilder();
+    public Response getUserByUsername(Request request, String username) {
+        try{
+            if (userExists(username)) {
+                    User getUser = this.userRepository.getByUsername(username);
+                    if(Objects.equals(getUser.getToken(), request.getHeaderMap().getHeader("Authorization").substring(7))){
+                        return new Response(HttpStatus.OK, ContentType.JSON, this.getObjectMapper().writeValueAsString(getUser)); //maybe display password w *
+                    }
+                    return new Response(HttpStatus.UNAUTHORIZED, ContentType.PLAIN_TEXT, "Attempted unauthorized access");
+            }
+            return new Response(HttpStatus.NOT_FOUND, ContentType.PLAIN_TEXT, "User not found");
 
-                while (search.next()) {
-                    String uuid = search.getString("user_id");
-                    String username1 = search.getString("username");
-                    String name = search.getString("name");
-                    String bio = search.getString("bio");
-                    String image = search.getString("image");
-                    String password = search.getString("password");
-                    Integer elo = search.getInt("elo");
-                    Integer wins = search.getInt("wins");
-                    Integer loss = search.getInt("losses");
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            return new Response(HttpStatus.INTERNAL_SERVER_ERROR, ContentType.JSON, "{ \"message\" : \"Internal Server Error\" }");
 
-                    userDataJSON.append(username).append(" (username) - ").append(name).append(" (name) - ").append(bio).append(" (bio) - ").append(image).append(" (image) - ").
-                            append(elo).append(" (elo) - ").append(wins).append(" (wins) - ").append(loss).append(" (loss)").append("\r\n");
+        }catch (JsonProcessingException e) {
 
-                    return new Response(HttpStatus.OK, ContentType.JSON, userDataJSON.toString());
+            return new Response(HttpStatus.INTERNAL_SERVER_ERROR, ContentType.PLAIN_TEXT, "Issue processing Json");
+        }
+    }
+
+    public Response editUserData(String username, Request request) {
+        try {
+            if (authorize(username, request)) {
+                User userToUpdate = this.getObjectMapper().readValue(request.getBody(), User.class);
+                userToUpdate.setUsername(username);
+                boolean update = this.userRepository.updateNameBioImage(userToUpdate);
+                if (update) {
+                    return new Response(HttpStatus.OK, ContentType.PLAIN_TEXT, "User updated");
                 }
-            }else{
-                return new Response(HttpStatus.UNAUTHORIZED, ContentType.PLAIN_TEXT, "Attempted unauthorized access");
+                return new Response(HttpStatus.CONFLICT, ContentType.PLAIN_TEXT, "User cannot be updated");
+
             }
+            return new Response(HttpStatus.NOT_FOUND, ContentType.PLAIN_TEXT, "Not authorized");
+        } catch (JsonProcessingException e) {
+            return new Response(HttpStatus.INTERNAL_SERVER_ERROR, ContentType.PLAIN_TEXT, "Issue processing Json " );
+        } catch (RuntimeException e) {
+            return new Response(HttpStatus.INTERNAL_SERVER_ERROR, ContentType.PLAIN_TEXT, "SQL Error");
         }
-        return new Response(HttpStatus.NOT_FOUND, ContentType.PLAIN_TEXT, "User not found");
-    }
-    public boolean getUserByUsernameAndPassword(String username, String password) throws SQLException {
-        PreparedStatement ps = connection.prepareStatement("SELECT * FROM users WHERE username = ? AND password = ?");
-        ps.setString(1, username);
-        ps.setString(2, password);
-        ResultSet result = ps.executeQuery();
-        if (result.next()) {
-            return true;
-        }
-        return false;
-    }
-    public boolean pushToken(String username, String password, String token) throws SQLException {
-        PreparedStatement ps = connection.prepareStatement("UPDATE users SET token = ? WHERE username = ? AND password = ?");
-        ps.setString(1, token);
-        ps.setString(2, username);
-        ps.setString(3, password);
-        int rs = ps.executeUpdate();
-        if(rs!=0)
-            return true;
-        return false;
-
     }
 
-    public Response editUserData(String username, Request request) throws SQLException {
-        if(authorize(username,request)) {
-            if(userExists(username)){
-                String requestBody = request.getBody();
-                Map<String, String> userData = parseJson(requestBody);
+    public Response loginUser(Request request) {
+        try{
+            User toVerify= this.getObjectMapper().readValue(request.getBody(),User.class);
+            // Verify the user exists and the password is correct
+            User verify = this.userRepository.getByUsername(toVerify.getUsername());
 
-                String name = userData.get("Name");
-                String bio = userData.get("Bio");
-                String image = userData.get("Image");
+            if (Objects.equals(verify.getPassword(), toVerify.getPassword())) {
 
+                if(Objects.equals(verify.getToken(), null)){
 
-                PreparedStatement ps = connection.prepareStatement("UPDATE users SET name = ?,  bio = ?, image = ? WHERE username = ?");
-                ps.setString(1, name);
-                ps.setString(2, bio);
-                ps.setString(3, image);
-                ps.setString(4, username);
-                int rs = ps.executeUpdate();
+                    // Generate a token in the format: {username}-mtcgToken
+                    String token = toVerify.getUsername() + "-mtcgToken";
+                    boolean addTokenToUser = userRepository.updateToken(toVerify, token);
 
-                return new Response(HttpStatus.OK, ContentType.PLAIN_TEXT, "User updated");
+                    if (addTokenToUser) {
+                        return new Response(HttpStatus.OK, ContentType.PLAIN_TEXT, token);
+                    }
+
+                }else{
+                    return new Response(HttpStatus.CONFLICT, ContentType.PLAIN_TEXT, "Already logged in");
+                }
             }
+            // Return unauthorized if the credentials are incorrect
+            return new Response(HttpStatus.UNAUTHORIZED, ContentType.PLAIN_TEXT, "Invalid credentials for Login");
+        }catch(JsonProcessingException e){
+            return new Response(HttpStatus.INTERNAL_SERVER_ERROR, ContentType.PLAIN_TEXT, "Issue processing Json");
+        } catch (RuntimeException e) {
+            return new Response(HttpStatus.INTERNAL_SERVER_ERROR, ContentType.PLAIN_TEXT, "SQL Error");
         }
-        return new Response(HttpStatus.NOT_FOUND, ContentType.PLAIN_TEXT, "Not authorized");
-    }
-    private boolean authorize(String username, Request request) throws SQLException {
-        PreparedStatement ps = connection.prepareStatement("SELECT * FROM users WHERE username = ?");
-        ps.setString(1, username);
-        ResultSet result = ps.executeQuery();
-        if (result.next()) {
-            String token = result.getString("token");
-            return Objects.equals(token, request.getHeaderMap().getHeader("Authorization").substring(7));
-        }
-        return false;
-    }
-
-    public Response loginUser(Request request) throws SQLException {
-        // Parse the login data
-        String requestBody = request.getBody();
-        Map<String, String> loginData = parseJson(requestBody);
-
-        String username = loginData.get("Username");
-        String password = loginData.get("Password");
-
-        // Verify the user exists and the password is correct
-        boolean doesUserExist = getUserByUsernameAndPassword(username, password);
-        if (doesUserExist) {
-            // Generate a token in the format: {username}-mtcgToken
-            String token = username + "-mtcgToken";
-            boolean addTokenToUser = pushToken(username, password, token);
-            if (addTokenToUser) {
-                return new Response(HttpStatus.OK, ContentType.PLAIN_TEXT, token);
-            }
-        }
-        // Return unauthorized if the credentials are incorrect
-        return new Response(HttpStatus.UNAUTHORIZED, ContentType.PLAIN_TEXT, "Invalid credentials for Login");
     }
 }
 

@@ -23,8 +23,6 @@ public class Server {
     }
     public void start() throws IOException {
 
-        Connection myCon = DBConnection.connect();
-
         final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
         System.out.println("Start http-server...");
@@ -36,8 +34,6 @@ public class Server {
                 final RequestHandler socketHandler = new RequestHandler(clientConnection, this.router);
                 executorService.submit(socketHandler);
             }
-        } finally {
-            DBConnection.close();
         }
     }
 

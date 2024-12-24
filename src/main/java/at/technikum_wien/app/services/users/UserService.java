@@ -17,7 +17,7 @@ public class UserService implements Service{
     }
 
     @Override
-    public Response handleRequest(Request request) throws SQLException {
+    public Response handleRequest(Request request) {
         if (request.getMethod() == Method.POST) {
             return this.userController.registerUser(request);
         } else if(request.getMethod() == Method.GET) {

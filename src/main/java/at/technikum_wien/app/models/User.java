@@ -1,20 +1,30 @@
 package at.technikum_wien.app.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Random;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
 @Getter
 @Setter
 
 public class User {
-
-    private Integer id;
+    private String uuid;
+    @JsonAlias({"Username"})
     private String username;
+    @JsonAlias({"Password"})
     private String password;
+    private String token;
+    @JsonAlias({"Name"})
+    private String name;
+    @JsonAlias({"Bio"})
+    private String bio;
+    @JsonAlias({"Image"})
+    private String image;
     private Integer coins;
     private List<Card> stack;
     private List<Card> deck;
@@ -22,11 +32,15 @@ public class User {
     private Integer gamesPlayed;//user stats
     private Integer gamesWon;//user stats
 
+    public User() {} //for JSON
 
-    public User(Integer id, String username, String password) {
-        this.id=id;
+    public User(String username, String password) {
+        this.uuid = "";
         this.username = username;
         this.password = password;
+        this.name = "";
+        this.bio = "";
+        this.image = "";
         this.coins = 20;
         this.stack = new ArrayList<>();
         this.deck = new ArrayList<>();

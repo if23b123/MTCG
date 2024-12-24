@@ -1,16 +1,14 @@
 package at.technikum_wien.app.services.packages;
 
 import at.technikum_wien.app.dal.DBConnection;
+import at.technikum_wien.app.dal.repository.PackageRepository;
 
 import java.sql.Connection;
 
 public class PackageController {
-    private Connection connection;
+    private PackageRepository packageRepository;
     public PackageController() {
-        connection = DBConnection.getConnection();
-        if (connection == null) {
-            connection=DBConnection.connect();
-        }
+        packageRepository = new PackageRepository();
     }
 
 }
