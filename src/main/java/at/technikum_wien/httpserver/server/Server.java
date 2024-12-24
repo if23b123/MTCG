@@ -2,13 +2,11 @@ package at.technikum_wien.httpserver.server;
 
 import at.technikum_wien.httpserver.utils.RequestHandler;
 import at.technikum_wien.httpserver.utils.Router;
-import at.technikum_wien.app.dal.DBConnection;
 import lombok.Getter;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.sql.Connection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
