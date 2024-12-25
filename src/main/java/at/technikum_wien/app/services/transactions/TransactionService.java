@@ -23,7 +23,12 @@ public class TransactionService implements Service {
 
 
     @Override
-    public Response handleRequest(Request request) throws IOException, SQLException{
+    public Response handleRequest(Request request){
+        if(request.getMethod() == Method.POST){
+            if(request.getPathParts().size()>1){
+                return this.controller.acquirePackage(request);
+            }
+        }
         return new Response(HttpStatus.NOT_IMPLEMENTED, ContentType.PLAIN_TEXT, "Method not implemented");
     }
 }

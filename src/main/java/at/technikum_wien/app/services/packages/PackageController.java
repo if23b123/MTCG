@@ -26,7 +26,7 @@ public class PackageController extends Controller {
     public Response createPackage(Request request) {
         try{
             String Token = request.getHeaderMap().getHeader("Authorization").substring(7);
-            if(this.userRepository.searchAdmin(Token)){
+            if(this.userRepository.searchToken(Token) && Token.equals("admin-mtcgToken")){
                 Collection<Card> cardToPackage = this.getObjectMapper().readValue(request.getBody(),new TypeReference<>(){});
                 boolean created = this.packageRepository.insertPackage(cardToPackage);
                 if(created){
