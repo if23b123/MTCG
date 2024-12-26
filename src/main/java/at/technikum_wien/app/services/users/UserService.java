@@ -8,7 +8,6 @@ import at.technikum_wien.httpserver.server.Response;
 import at.technikum_wien.httpserver.server.Service;
 
 import java.sql.SQLException;
-//to handle the type of request
 public class UserService implements Service{
     private UserController userController;
 

@@ -13,9 +13,10 @@ public class PackageService implements Service {
         this.controller = controller;
     }
 
+    @Override
     public Response handleRequest(Request request) {
         if(request.getMethod()== Method.POST){
-
+            return controller.createPackage(request);
         }
         return new Response(HttpStatus.NOT_IMPLEMENTED, ContentType.PLAIN_TEXT, "Method Not Allowed");
     }

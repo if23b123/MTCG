@@ -4,9 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Random;
+import java.util.*;
+import java.util.Stack;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
 
 @Getter
@@ -25,6 +25,7 @@ public class User {
     private String bio;
     @JsonAlias({"Image"})
     private String image;
+    @JsonAlias({"Coins"})
     private Integer coins;
     private List<Card> stack;
     private List<Card> deck;
@@ -32,7 +33,9 @@ public class User {
     private Integer gamesPlayed;//user stats
     private Integer gamesWon;//user stats
 
-    public User() {} //for JSON
+    public User() {
+        this.coins=20;
+    } //for JSON
 
     public User(String username, String password) {
         this.uuid = "";
@@ -42,8 +45,8 @@ public class User {
         this.bio = "";
         this.image = "";
         this.coins = 20;
-        this.stack = new ArrayList<>();
-        this.deck = new ArrayList<>();
+        this.stack = new Stack<>();
+        this.deck = new Vector<Card>() ;
         this.elo = 100; //starting value
         this.gamesPlayed = 0;
         this.gamesWon = 0;
