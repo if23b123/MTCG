@@ -6,6 +6,7 @@ import at.technikum_wien.app.models.Card;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 
 public class PackageRepository {
@@ -38,7 +39,7 @@ public class PackageRepository {
             }
 
             // Step 3: Insert into the cards table for each card in the list
-            String sqlCards = "INSERT INTO cards (id, name, damage, package_id) VALUES (?, ?, ?, ?)";
+            String sqlCards = "INSERT INTO cards (id, name, damage, package_id, type, element) VALUES (?, ?, ?, ?, ?, ?)";
             PreparedStatement psCard = unitOfWork.prepareStatement(sqlCards);
 
             for (Card card : cards) {
@@ -46,6 +47,8 @@ public class PackageRepository {
                 psCard.setString(2, card.getCardName());
                 psCard.setDouble(3, card.getDamage());
                 psCard.setInt(4, packageID);
+                psCard.setString(5, card.getType());
+                psCard.setString(6, card.getElement());
 
                 // Execute the insert for each card
                 psCard.addBatch(); // Add to batch for efficiency
@@ -67,8 +70,25 @@ public class PackageRepository {
             return allInserted;
 
         } catch (SQLException e) {
+            unitOfWork.rollbackTransaction();
             throw new RuntimeException(e);
         }
 
+    }
+
+    public Collection<Integer> getPackageId(String token){
+        String sql = "SELECT packages_id FROM packages WHERE acquired_by = ?";
+        Collection<Integer> packageIds = new ArrayList<>();
+        try(PreparedStatement ps = this.unitOfWork.prepareStatement(sql)){
+            ps.setString(1, token);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                packageIds.add(rs.getInt("packages_id"));
+            }
+            return packageIds;
+        }catch(SQLException e){
+            unitOfWork.rollbackTransaction();
+            throw new RuntimeException(e);
+        }
     }
 }

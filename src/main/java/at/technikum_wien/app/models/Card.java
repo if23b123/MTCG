@@ -2,8 +2,11 @@ package at.technikum_wien.app.models;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import lombok.Setter;
 import lombok.Getter;
+
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -14,10 +17,9 @@ public class Card {
     private String cardName;
     @JsonAlias({"Damage", "damage"})
     private double damage;
-    @JsonAlias({"Element", "element"})
     private String element;
-    @JsonAlias({"Type", "type"})
     private String type;
+
 
 
     public Card(){}
@@ -31,6 +33,38 @@ public class Card {
         this.cardName = name;
         this.damage = damage;
         this.element = element;
+    }
+
+    @JsonSetter("Name")
+    public void setCardName(String cardName) {
+        this.cardName = cardName;
+        deriveElementAndType();
+    }
+
+    private void deriveElementAndType() {
+        if (cardName == null) {
+            return;
+        }
+
+        if (cardName.toLowerCase().contains("spell")) {
+            this.type = "spellcard";
+            if (cardName.toLowerCase().contains("water")) {
+                this.element = "water";
+            } else if (cardName.toLowerCase().contains("fire")) {
+                this.element = "fire";
+            } else {
+                this.element = "normal";
+            }
+        } else {
+            this.type = "monstercard";
+            if (cardName.toLowerCase().contains("water") || Objects.equals(getCardName(), "Kraken")) {
+                this.element = "water";
+            } else if (cardName.toLowerCase().contains("fire") || Objects.equals(getCardName(), "Dragon")) {
+                this.element = "fire";
+            } else {
+                this.element = "normal";
+            }
+        }
     }
 
 
