@@ -17,6 +17,8 @@ import com.fasterxml.jackson.databind.type.ArrayType;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class DeckController extends Controller {
     private DeckRepository deckRepository;
@@ -35,14 +37,18 @@ public class DeckController extends Controller {
         try{
             //Setting card Ids of deck
             Deck deck = new Deck();
-            deck.setCards(this.getObjectMapper().readValue(request.getBody(), new TypeReference<ArrayList<String>>(){}));
+            deck.setCards(this.getObjectMapper().readValue(request.getBody(), new TypeReference<>(){}));
 
             //See if user is logged in (token exists in db)
             String authorizationToken = request.getHeaderMap().getHeader("Authorization").substring(7);
             if(this.userRepository.searchToken(authorizationToken)){
 
                 //Get the packages the cards are in
-                ArrayList<Integer> cardPackages = this.cardRepository.getPackages(deck.getCards());
+                ArrayList<Integer> cardPackages = new ArrayList<>();
+                ArrayList <Card> cards = this.cardRepository.getCardsById(deck.getCardIds());
+                for(Card card : cards){
+                    cardPackages.add(card.getPackage_id());
+                }
 
                 //Check if the Packages are acquired of the token, if the token has the cards on its stack
                 if(this.packageRepository.allPackagesOfToken(cardPackages, authorizationToken)){
@@ -63,6 +69,54 @@ public class DeckController extends Controller {
         }catch(Exception e){
             return new Response(HttpStatus.BAD_REQUEST, ContentType.PLAIN_TEXT, e.getMessage());
         }
+    }
+
+    public Response getDeck(Request request){
+        String token = request.getHeaderMap().getHeader("Authorization").substring(7);
+            if(this.userRepository.searchToken(token)){
+                Collection<String> cardIds = this.deckRepository.getCardIds(token);
+                Collection<Card> deckCards = new ArrayList<>();
+                if(!cardIds.isEmpty()){
+                    deckCards = this.cardRepository.getCardsById(cardIds);
+                }
+                try{
+                    String responseObject = this.getObjectMapper().writeValueAsString(deckCards);
+                    return new Response(HttpStatus.OK, ContentType.JSON, responseObject);
+                } catch (JsonProcessingException e) {
+                    return new Response(HttpStatus.INTERNAL_SERVER_ERROR, ContentType.JSON, e.getMessage());
+                }
+            }
+            return new Response(HttpStatus.CONFLICT, ContentType.PLAIN_TEXT,"User not logged in (No such token found)");
+
+    }
+
+    public Response getPlainDeck(Request request){
+        try{
+            Response response = this.getDeck(request);
+            if(response.getStatus()==200){
+                List<Map<String, Object>> cards = this.getObjectMapper().readValue(response.getContent(), new TypeReference<>() {});
+
+                StringBuilder table = new StringBuilder();
+                table.append(String.format("%-40s %-20s %-10s %-15s %-10s %-10s%n", "ID", "Name", "Element", "Type", "Damage", "Package ID"));
+                table.append("----------------------------------------------------------------------------------------------------------------\n");
+                for (Map<String, Object> card : cards) {
+                    table.append(String.format("%-40s %-20s %-10s %-15s %-10.1f %-10d%n",
+                            card.get("id"),
+                            card.get("Name"),
+                            card.get("element"),
+                            card.get("type"),
+                            card.get("damage"),
+                            card.get("package_id")));
+                }
+                return new Response(HttpStatus.OK, ContentType.JSON, table.toString());
+            }
+            return response;
+
+        }catch(JsonProcessingException | RuntimeException e){
+            return new Response(HttpStatus.INTERNAL_SERVER_ERROR, ContentType.PLAIN_TEXT, e.getMessage());
+        }
+
+
     }
 
 }

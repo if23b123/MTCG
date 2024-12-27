@@ -6,7 +6,12 @@ import at.technikum_wien.httpserver.http.HttpStatus;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import lombok.Setter;
+import lombok.Getter;
 
+
+@Getter
+@Setter
 public class Response {
 
     private int status;

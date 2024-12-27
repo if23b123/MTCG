@@ -19,6 +19,7 @@ public class Card {
     private double damage;
     private String element;
     private String type;
+    private Integer package_id;
 
 
 

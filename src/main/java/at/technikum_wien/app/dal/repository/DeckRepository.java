@@ -7,6 +7,8 @@ import at.technikum_wien.app.models.Deck;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
 
 public class DeckRepository {
     private UnitOfWork unitOfWork;
@@ -76,6 +78,24 @@ public class DeckRepository {
             this.unitOfWork.rollbackTransaction();
             return false;
         }catch(SQLException | RuntimeException e){
+            this.unitOfWork.rollbackTransaction();
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Collection<String> getCardIds(String token){
+        Collection<String> cardIds = new ArrayList<>();
+        String sql = "SELECT card_id FROM decks WHERE user_token = ?";
+        PreparedStatement ps = this.unitOfWork.prepareStatement(sql);
+        try{
+            ps.setString(1,token);
+            ResultSet rs = ps.executeQuery();
+            while(rs.next()){
+                cardIds.add(rs.getString("card_id"));
+            }
+            return cardIds;
+
+        }catch(SQLException e){
             this.unitOfWork.rollbackTransaction();
             throw new RuntimeException(e);
         }

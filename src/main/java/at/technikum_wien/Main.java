@@ -4,6 +4,8 @@ import at.technikum_wien.app.services.cards.CardController;
 import at.technikum_wien.app.services.cards.CardService;
 import at.technikum_wien.app.services.deck.DeckController;
 import at.technikum_wien.app.services.deck.DeckService;
+import at.technikum_wien.app.services.stats.StatsController;
+import at.technikum_wien.app.services.stats.StatsService;
 import at.technikum_wien.app.services.transactions.TransactionController;
 import at.technikum_wien.app.services.transactions.TransactionService;
 import at.technikum_wien.app.services.users.UserController;
@@ -33,6 +35,7 @@ public class Main {
         TransactionController transactionController = new TransactionController();
         CardController cardController = new CardController();
         DeckController deckController = new DeckController();
+        StatsController statsController = new StatsController();
 
         router.addService("/users", new UserService(userController));
         router.addService("/sessions", new SessionService(userController));
@@ -40,6 +43,7 @@ public class Main {
         router.addService("/transactions", new TransactionService(transactionController));
         router.addService("/cards", new CardService(cardController));
         router.addService("/deck", new DeckService(deckController));
+        router.addService("/stats", new StatsService(statsController));
         return router;
     }
 }

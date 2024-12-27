@@ -42,5 +42,13 @@ public class Deck {
 
     }
 
+    public ArrayList<String> getCardIds() {
+        ArrayList<String> cardIds = new ArrayList<>();
+        for (Card card : cards) {
+            cardIds.add(card.getId());
+        }
+        return cardIds;
+    }
+
 
 }
