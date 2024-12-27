@@ -1,5 +1,6 @@
 package at.technikum_wien.app.services.transactions;
 
+import at.technikum_wien.app.controller.Controller;
 import at.technikum_wien.app.dal.DataAccessException;
 import at.technikum_wien.app.dal.repository.TransactionRepository;
 import at.technikum_wien.app.dal.repository.UserRepository;
@@ -8,7 +9,7 @@ import at.technikum_wien.httpserver.http.HttpStatus;
 import at.technikum_wien.httpserver.server.Request;
 import at.technikum_wien.httpserver.server.Response;
 
-public class TransactionController {
+public class TransactionController extends Controller {
     private TransactionRepository repository;
     private UserRepository userRepository;
     public TransactionController() {

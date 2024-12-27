@@ -39,4 +39,27 @@ public class CardRepository {
             throw new RuntimeException(e);
         }
     }
+
+    public ArrayList <Integer> getPackages(Collection<Card> cards){
+        ArrayList <Integer> packagesOfCards = new ArrayList<>();
+
+        String sql = "SELECT package_id FROM cards WHERE id = ?";
+        PreparedStatement ps = this.unitOfWork.prepareStatement(sql);
+        try{
+            for(Card card : cards){
+                ps.setString(1,card.getId());
+                ResultSet rs = ps.executeQuery();
+                while(rs.next()){
+                    packagesOfCards.add(rs.getInt("package_id"));
+                    unitOfWork.commitTransaction();
+                }
+            }
+            return packagesOfCards;
+        }catch(SQLException e){
+            unitOfWork.rollbackTransaction();
+            throw new RuntimeException(e);
+        }
+    }
+
+
 }
