@@ -66,8 +66,8 @@ public class UserRepository {
         }
     }
 
-    public Collection<User> getAllUsers(){
-        Collection<User> usersFetched = new ArrayList<User>();
+    public ArrayList<User> getAllUsers(){
+        ArrayList<User> usersFetched = new ArrayList<User>();
 
         try {
             String sql = "SELECT * FROM users";
@@ -78,6 +78,7 @@ public class UserRepository {
                 user.setUuid(rs.getString("user_id"));
                 user.setUsername(rs.getString("username"));
                 user.setName(rs.getString("name"));
+                user.setToken(rs.getString("token"));
                 user.setBio(rs.getString("bio"));
                 user.setImage(rs.getString("image"));
                 user.setElo(rs.getInt("elo"));
@@ -237,6 +238,8 @@ public class UserRepository {
             throw new RuntimeException(e);
         }
     }
+
+
 
 }
 

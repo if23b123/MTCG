@@ -2,6 +2,7 @@ package at.technikum_wien.app.services.users;
 
 import at.technikum_wien.app.controller.Controller;
 import at.technikum_wien.app.dal.DataAccessException;
+import at.technikum_wien.app.dal.repository.DeckRepository;
 import at.technikum_wien.app.dal.repository.UserRepository;
 import at.technikum_wien.httpserver.http.HttpStatus;
 import at.technikum_wien.httpserver.http.ContentType;
@@ -17,9 +18,11 @@ import java.util.*;
 
 public class UserController extends Controller {
     private UserRepository userRepository;
+    private DeckRepository deckRepository;
 
     public UserController() {
         userRepository = new UserRepository();
+        deckRepository = new DeckRepository();
     }
 
     private boolean userExists(String username) {
@@ -148,7 +151,10 @@ public class UserController extends Controller {
                     boolean addTokenToUser = userRepository.updateToken(toVerify, token);
 
                     if (addTokenToUser) {
-                        return new Response(HttpStatus.OK, ContentType.PLAIN_TEXT, token);
+                        if(this.deckRepository.insertUser(token)){
+                            return new Response(HttpStatus.OK, ContentType.PLAIN_TEXT, token);
+                        }
+                        return new Response(HttpStatus.CONFLICT, ContentType.PLAIN_TEXT, "Error when creating users deck");
                     }
 
                 }else{

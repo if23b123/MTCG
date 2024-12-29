@@ -8,6 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 
 public class PackageRepository {
     private UnitOfWork unitOfWork;
@@ -86,6 +87,26 @@ public class PackageRepository {
                 packageIds.add(rs.getInt("packages_id"));
             }
             return packageIds;
+        }catch(SQLException e){
+            unitOfWork.rollbackTransaction();
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean allPackagesOfToken(ArrayList<Integer> packagesToCheck, String token){
+        String sql = "SELECT acquired_by FROM packages WHERE packages_id= ?";
+        PreparedStatement ps = this.unitOfWork.prepareStatement(sql);
+        try{
+            for(Integer packageId : packagesToCheck){
+                ps.setInt(1,packageId);
+                ResultSet rs = ps.executeQuery();
+                while(rs.next()){
+                    if(!Objects.equals(rs.getString("acquired_by"), token)){
+                        return false;
+                    }
+                }
+            }
+            return true;
         }catch(SQLException e){
             unitOfWork.rollbackTransaction();
             throw new RuntimeException(e);
