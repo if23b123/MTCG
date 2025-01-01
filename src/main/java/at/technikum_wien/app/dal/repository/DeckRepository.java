@@ -188,6 +188,20 @@ public class DeckRepository {
             throw new RuntimeException("Error updating positions for token: " + token, e);
         }
     }
+    public boolean isCardOnTokensDeck(String token, String cardId){
+        String sql = "SELECT * FROM decks WHERE user_token = ? AND card_id = ?";
+        PreparedStatement ps = this.unitOfWork.prepareStatement(sql);
+        try{
+            ps.setString(1,token);
+            ps.setString(2, cardId);
+            ResultSet rs = ps.executeQuery();
+            if(rs.next())
+                return true;
+            return false;
+        }catch(SQLException e){
+            throw new RuntimeException(e);
+        }
+    }
 
 
 }

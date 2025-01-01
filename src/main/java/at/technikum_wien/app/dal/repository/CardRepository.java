@@ -87,5 +87,26 @@ public class CardRepository {
         }
     }
 
+    public Card getCardById(String id) {
+        Card card = new Card();
+        String sql = "SELECT * FROM cards WHERE id = ?";
+        PreparedStatement ps = this.unitOfWork.prepareStatement(sql);
+        try{
+            ps.setString(1, id);
+            ResultSet rs = ps.executeQuery();
+            if(rs.next()){
+                card.setId(rs.getString("id"));
+                card.setCardName(rs.getString("name"));
+                card.setDamage(rs.getInt("damage"));
+                card.setPackage_id(rs.getInt("package_id"));
+                card.setType(rs.getString("type"));
+                card.setElement(rs.getString("element"));
+            }
+            return card;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
 }

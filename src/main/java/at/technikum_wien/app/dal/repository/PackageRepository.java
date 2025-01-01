@@ -125,4 +125,18 @@ public class PackageRepository {
             throw new RuntimeException(e);
         }
     }
+    public String getAcquiredByById(Integer packageId){
+        String sql = "SELECT acquired_by FROM packages WHERE packages_id = ?";
+        PreparedStatement ps = this.unitOfWork.prepareStatement(sql);
+        try{
+            ps.setInt(1,packageId);
+            ResultSet rs = ps.executeQuery();
+            if(rs.next()){
+                return rs.getString("acquired_by");
+            }
+            return null;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
