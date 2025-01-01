@@ -50,7 +50,6 @@ public class DeckRepository {
             }
             return maxDeckCardId;
         }catch(SQLException e){
-            this.unitOfWork.rollbackTransaction();
             throw new RuntimeException(e);
         }
     }
@@ -63,7 +62,6 @@ public class DeckRepository {
             int position = 0;
 
             for(Card card : deck.getCards()){
-                System.out.println(card.getId() + " " + position + " " + token + " " + getMaxDeckCardID(token));
                 ++position;
                 ps.setString(1, card.getId());
                 ps.setInt(2, position);
@@ -75,7 +73,6 @@ public class DeckRepository {
                 this.unitOfWork.commitTransaction();
                 return true;
             }
-            this.unitOfWork.rollbackTransaction();
             return false;
         }catch(SQLException | RuntimeException e){
             this.unitOfWork.rollbackTransaction();
@@ -83,8 +80,8 @@ public class DeckRepository {
         }
     }
 
-    public Collection<String> getCardIds(String token){
-        Collection<String> cardIds = new ArrayList<>();
+    public ArrayList<String> getCardIds(String token){
+        ArrayList<String> cardIds = new ArrayList<>();
         String sql = "SELECT card_id FROM decks WHERE user_token = ?";
         PreparedStatement ps = this.unitOfWork.prepareStatement(sql);
         try{
@@ -98,6 +95,97 @@ public class DeckRepository {
         }catch(SQLException e){
             this.unitOfWork.rollbackTransaction();
             throw new RuntimeException(e);
+        }
+    }
+
+    public Integer getMaxPosition(String token){
+        String sql = "SELECT MAX(position) FROM decks WHERE user_token = ?";
+        PreparedStatement ps = this.unitOfWork.prepareStatement(sql);
+        Integer maxPosition = 0;
+        try{
+            ps.setString(1,token);
+            ResultSet rs = ps.executeQuery();
+            if(rs.next()){
+                maxPosition = rs.getInt(1);
+            }
+            return maxPosition;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean updateTokenPosition(String token, String cardId){
+        Integer maxPosition = getMaxPosition(token);
+        String sql = "UPDATE decks SET position = ?, user_token = ? WHERE card_id = ?";
+        PreparedStatement ps = this.unitOfWork.prepareStatement(sql);
+        int i = 0;
+        try {
+            ps.setInt(1, maxPosition+1);
+            ps.setString(2, token);
+            ps.setString(3, cardId);
+            i = ps.executeUpdate();
+            if(i==1){
+                this.unitOfWork.commitTransaction();
+                return true;
+            }
+            return false;
+        }catch(SQLException | RuntimeException e){
+            this.unitOfWork.rollbackTransaction();
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Integer countDeckByToken(String token){
+        String sql = "SELECT COUNT(card_id) FROM decks WHERE user_token = ?";
+        PreparedStatement ps = this.unitOfWork.prepareStatement(sql);
+        try{
+            ps.setString(1,token);
+            Integer count = 0;
+            ResultSet rs = ps.executeQuery();
+            if(rs.next()){
+                count = rs.getInt(1);
+            }
+            return count;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean updatePosition(String token){
+        Integer count = countDeckByToken(token);
+        if (count == 0) {
+            return false;
+        }
+
+        String sql = "UPDATE decks SET position = ? WHERE user_token = ? AND card_id = ?";
+        try (PreparedStatement ps = this.unitOfWork.prepareStatement(sql)) {
+            int j = 0;
+
+            String selectSql = "SELECT card_id FROM decks WHERE user_token = ? ORDER BY card_id";
+            try (PreparedStatement selectPs = this.unitOfWork.prepareStatement(selectSql)) {
+                selectPs.setString(1, token);
+                ResultSet rs = selectPs.executeQuery();
+
+                while (rs.next()) {
+                    ps.setInt(1, j + 1); // Set position to 1, 2, 3, etc.
+                    ps.setString(2, token); // user_token
+                    ps.setString(3, rs.getString("card_id")); // card_id
+                    ps.addBatch();
+                    j++;
+                }
+
+                if (j > 0) {
+                    int[] updateCounts = ps.executeBatch();
+                    if (updateCounts.length == j) {
+                        this.unitOfWork.commitTransaction();
+                        return true;
+                    }
+                }
+            }
+            return false;
+        } catch (SQLException e) {
+            this.unitOfWork.rollbackTransaction();
+            throw new RuntimeException("Error updating positions for token: " + token, e);
         }
     }
 

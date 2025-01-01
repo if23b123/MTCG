@@ -19,7 +19,7 @@ public class BattleService implements Service {
     @Override
     public Response handleRequest(Request request){
         if(request.getMethod().equals(Method.POST)){
-
+            return this.controller.startBattle(request);
         }
         return new Response(HttpStatus.NOT_IMPLEMENTED, ContentType.PLAIN_TEXT, "Method Not Allowed");
     }

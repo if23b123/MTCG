@@ -68,6 +68,24 @@ public class CardRepository {
         }
     }
 
+    public boolean updatePackageId(String cardId, Integer packageId) {
+        String sql = "UPDATE cards SET package_id = ? WHERE id = ?";
+        PreparedStatement ps = this.unitOfWork.prepareStatement(sql);
+        try{
+            ps.setInt(1,packageId);
+            ps.setString(2,cardId);
+            int rs = ps.executeUpdate();
+            if(rs > 0){
+                unitOfWork.commitTransaction();
+                return true;
+            }
+
+            return false;
+        }catch(SQLException e){
+            this.unitOfWork.rollbackTransaction();
+            throw new RuntimeException(e);
+        }
+    }
 
 
 }

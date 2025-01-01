@@ -68,5 +68,9 @@ public class Card {
         }
     }
 
+    public void applyPowerSurge() {
+        this.damage *= 1.5;
+    }
+
 
 }

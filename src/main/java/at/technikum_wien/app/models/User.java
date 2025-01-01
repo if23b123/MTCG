@@ -52,57 +52,6 @@ public class User {
         this.gamesWon = 0;
     }
 
-    public void updateElo(boolean hasWon) {
-        if (hasWon) {
-            elo += 3;   // +3 points for win
-            gamesWon++;
-        } else {
-            elo -= 5;   // -5 for loss
-        }
-        gamesPlayed++; //for stats
-    }
-
-    public boolean acquireCards(List<Card> newCards) { //to add a new package
-        if (coins >= 5) {
-            coins -= 5;
-            stack.addAll(newCards); // adding newCards which is a new package to the users stack of cards
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public boolean setDeck(List<Card> selectedCards) {
-        if (selectedCards.size() != 4) {
-            return false;
-        }
-        deck.clear();
-        deck.addAll(selectedCards);
-        return true;
-    }
-    public boolean battleLogic(Card userCard, Card opponentCard){
-        return true;
-    }
-    public boolean battle(User opponent) {
-        Random random = new Random();
-        int randomCardUser= random.nextInt(4);
-        int randomCardOpponent= random.nextInt(4);
-        boolean result = battleLogic(deck.get(randomCardUser), opponent.deck.get(randomCardOpponent) ); //battle logic needed
-        if (result) {
-            updateElo(true);  // Update this user's ELO
-            opponent.updateElo(false);  // Update opponent's ELO
-        } else {
-            updateElo(false);
-            opponent.updateElo(true);
-        }
-
-        return result;
-    }
-    public boolean tradeCard(Card offerCard, Card requestCard, User otherUser) {
-
-        //trade logic needed
-        return true;
-    }
 
 
 
