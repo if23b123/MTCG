@@ -10,6 +10,8 @@ import at.technikum_wien.app.services.scoreboard.ScoreboardController;
 import at.technikum_wien.app.services.scoreboard.ScoreboardService;
 import at.technikum_wien.app.services.stats.StatsController;
 import at.technikum_wien.app.services.stats.StatsService;
+import at.technikum_wien.app.services.tradings.TradingsController;
+import at.technikum_wien.app.services.tradings.TradingsService;
 import at.technikum_wien.app.services.transactions.TransactionController;
 import at.technikum_wien.app.services.transactions.TransactionService;
 import at.technikum_wien.app.services.users.UserController;
@@ -42,6 +44,7 @@ public class Main {
         StatsController statsController = new StatsController();
         ScoreboardController scoreboardController = new ScoreboardController();
         BattleController battleController = new BattleController();
+        TradingsController tradingsController = new TradingsController();
 
         router.addService("/users", new UserService(userController));
         router.addService("/sessions", new SessionService(userController));
@@ -52,6 +55,7 @@ public class Main {
         router.addService("/stats", new StatsService(statsController));
         router.addService("/scoreboard", new ScoreboardService(scoreboardController));
         router.addService("/battles", new BattleService(battleController));
+        router.addService("/tradings", new TradingsService(tradingsController));
         return router;
     }
 }
