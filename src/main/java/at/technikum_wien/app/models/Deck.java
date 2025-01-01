@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Random;
 
 @Getter
 @Setter
@@ -13,13 +14,13 @@ import java.util.Collection;
 public class Deck {
     @JsonAlias({"Token"})
     String token;
-    Collection<Card> cards = new ArrayList<>(4);
+    ArrayList<Card> cards = new ArrayList<>(4);
 
     public Deck(){}
     public Deck(String token) {
         this.token = token;
     }
-    public void setCards(ArrayList<String> cardIds) throws Exception {
+    public void setCardsFromId(ArrayList<String> cardIds) throws Exception {
         if (cardIds == null) {
             throw new Exception("No card-ids appended");
         }
@@ -38,16 +39,23 @@ public class Deck {
             card.setId(cardId);
             cards.add(card);
         }
-
-
     }
-
+    public void setCardsFromCards(ArrayList<Card> cardsToDeck) throws Exception {
+        cards.clear();
+        cards.addAll(cardsToDeck);
+    }
     public ArrayList<String> getCardIds() {
         ArrayList<String> cardIds = new ArrayList<>();
         for (Card card : cards) {
             cardIds.add(card.getId());
         }
         return cardIds;
+    }
+
+    public Card getRandomCard() {
+        Random random = new Random();
+        Integer index = random.nextInt(cards.size());
+        return cards.get(index);
     }
 
 

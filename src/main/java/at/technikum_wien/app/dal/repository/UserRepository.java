@@ -8,7 +8,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 
 public class UserRepository {
     private UnitOfWork unitOfWork;
@@ -36,9 +35,9 @@ public class UserRepository {
             if (rs > 0) {
                 unitOfWork.commitTransaction(); // Commit the transaction if insert was successful
                 return true; // Return true if the user was successfully registered
-            } else {
-                return false; // Return false if no rows were inserted (user already exists)
             }
+            return false; // Return false if no rows were inserted (user already exists)
+
         } catch (SQLException e) {
             unitOfWork.rollbackTransaction();
             throw new DataAccessException("Failed to register new user.", e);
@@ -55,19 +54,17 @@ public class UserRepository {
             ps.setString(1, username);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                unitOfWork.commitTransaction();
                 return true;
             }
             return false;
         }
         catch (SQLException e){
-            unitOfWork.rollbackTransaction();
             throw new DataAccessException("Failed to search for existing user.", e);
         }
     }
 
     public ArrayList<User> getAllUsers(){
-        ArrayList<User> usersFetched = new ArrayList<User>();
+        ArrayList<User> usersFetched = new ArrayList<>();
 
         try {
             String sql = "SELECT * FROM users";
@@ -88,7 +85,6 @@ public class UserRepository {
                 usersFetched.add(user);
             }
         } catch (SQLException e) {
-            unitOfWork.rollbackTransaction();
             throw new RuntimeException(e);
         }
         return usersFetched;
@@ -116,7 +112,6 @@ public class UserRepository {
             }
             return searchUser;
         }catch(SQLException e){
-            unitOfWork.rollbackTransaction();
             throw new RuntimeException(e);
         }
     }
@@ -167,12 +162,10 @@ public class UserRepository {
             ps.setString(1,token);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                unitOfWork.commitTransaction();
                 return true;
             }
             return false;
         }catch(SQLException e){
-            unitOfWork.rollbackTransaction();
             throw new RuntimeException(e);
         }
     }
@@ -188,7 +181,6 @@ public class UserRepository {
                 throw new DataAccessException("Token not found: " + token);
             }
         }catch(SQLException e){
-            unitOfWork.rollbackTransaction();
             throw new RuntimeException(e);
         }
     }
@@ -231,13 +223,52 @@ public class UserRepository {
                 user.setGamesWon(rs.getInt("wins"));
                 user.setCoins(rs.getInt("coins"));
                 return user;
+            }else{
+                throw new DataAccessException("User not found for token: " + token);
             }
-            throw new DataAccessException("User not found for token: " + token);
+        }catch(SQLException e){
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void updateWins(Integer elo, String token){
+        String sql = "UPDATE users SET wins = wins + ?, elo = ? WHERE token = ?";
+        PreparedStatement ps = unitOfWork.prepareStatement(sql);
+        try{
+            ps.setInt(1,1);
+            ps.setInt(2,elo+3);
+            ps.setString(3,token);
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                unitOfWork.commitTransaction();
+            } else{
+                throw new DataAccessException("User not found for token: " + token);
+            }
         }catch(SQLException e){
             unitOfWork.rollbackTransaction();
             throw new RuntimeException(e);
         }
     }
+    public void updateLosses(Integer elo, String token){
+        String sql = "UPDATE users SET losses = losses + ?, elo = ? WHERE token = ?";
+        PreparedStatement ps = unitOfWork.prepareStatement(sql);
+        try{
+            ps.setInt(1,1);
+            ps.setInt(2,elo-5);
+            ps.setString(3,token);
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                unitOfWork.commitTransaction();
+            }else{
+                throw new DataAccessException("User not found for token: " + token);
+            }
+        }catch(SQLException e){
+            unitOfWork.rollbackTransaction();
+            throw new RuntimeException(e);
+        }
+    }
+
+
 
 
 

@@ -88,12 +88,11 @@ public class PackageRepository {
             }
             return packageIds;
         }catch(SQLException e){
-            unitOfWork.rollbackTransaction();
             throw new RuntimeException(e);
         }
     }
 
-    public boolean allPackagesOfToken(ArrayList<Integer> packagesToCheck, String token){
+    public Integer allPackagesOfToken(ArrayList<Integer> packagesToCheck, String token){
         String sql = "SELECT acquired_by FROM packages WHERE packages_id= ?";
         PreparedStatement ps = this.unitOfWork.prepareStatement(sql);
         try{
@@ -102,13 +101,27 @@ public class PackageRepository {
                 ResultSet rs = ps.executeQuery();
                 while(rs.next()){
                     if(!Objects.equals(rs.getString("acquired_by"), token)){
-                        return false;
+                        return packageId;
                     }
                 }
             }
-            return true;
+            return null;
         }catch(SQLException e){
-            unitOfWork.rollbackTransaction();
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Integer getMaxPackageByToken(String token){
+        String sql = "SELECT max(packages_id) FROM packages WHERE acquired_by = ?";
+        PreparedStatement ps = this.unitOfWork.prepareStatement(sql);
+        try{
+            ps.setString(1, token);
+            ResultSet rs = ps.executeQuery();
+            if(rs.next()){
+                return rs.getInt(1);
+            }
+            return null;
+        } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }

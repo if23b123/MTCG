@@ -37,7 +37,7 @@ public class DeckController extends Controller {
         try{
             //Setting card Ids of deck
             Deck deck = new Deck();
-            deck.setCards(this.getObjectMapper().readValue(request.getBody(), new TypeReference<>(){}));
+            deck.setCardsFromId(this.getObjectMapper().readValue(request.getBody(), new TypeReference<>(){}));
 
             //See if user is logged in (token exists in db)
             String authorizationToken = request.getHeaderMap().getHeader("Authorization").substring(7);
@@ -51,7 +51,8 @@ public class DeckController extends Controller {
                 }
 
                 //Check if the Packages are acquired of the token, if the token has the cards on its stack
-                if(this.packageRepository.allPackagesOfToken(cardPackages, authorizationToken)){
+                Integer notTokensCard = this.packageRepository.allPackagesOfToken(cardPackages, authorizationToken);
+                if(notTokensCard==null){
 
                     //Insert Cards into users deck
                     if(this.deckRepository.insertDeck(authorizationToken,deck)){
@@ -59,7 +60,7 @@ public class DeckController extends Controller {
                     }
                     return new Response(HttpStatus.CONFLICT, ContentType.PLAIN_TEXT, "Error when configuring Deck");
                 }
-                return new Response(HttpStatus.UNAUTHORIZED, ContentType.PLAIN_TEXT, "Card not on stack");
+                return new Response(HttpStatus.UNAUTHORIZED, ContentType.PLAIN_TEXT, "Card from Package (" + notTokensCard.toString() + ") not on stack");
             }
             return new Response(HttpStatus.CONFLICT, ContentType.PLAIN_TEXT,"User not logged in (No such token found)");
         }catch(JsonProcessingException e){
